@@ -1,42 +1,9 @@
-import sqlite3
 import re
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
+from database import *
 
-# --- MODULE 1: DATABASE SETUP ---
-def init_db():
-    conn = sqlite3.connect('topjobs_listings.db')
-    cursor = conn.cursor()
-    
-    # Added job_url to the schema
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS jobs (
-            job_ref_no TEXT PRIMARY KEY,
-            alert_string TEXT,
-            job_url TEXT,
-            position TEXT,
-            employer TEXT,
-            opening_date TEXT,
-            closing_date TEXT
-        )
-    ''')
-    conn.commit()
-    return conn
 
-def save_job(conn, job_ref_no, alert_string, job_url, position, employer, opening_date, closing_date):
-    cursor = conn.cursor()
-    try:
-        # Updated INSERT statement to include job_url
-        cursor.execute('''
-            INSERT INTO jobs (job_ref_no, alert_string, job_url, position, employer, opening_date, closing_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (job_ref_no, alert_string, job_url, position, employer, opening_date, closing_date))
-        conn.commit()
-        print(f"[+] Saved: {job_ref_no} | {position}")
-    except sqlite3.IntegrityError:
-        print(f"[-] Skipped: {job_ref_no} already in database.")
-
-# --- MODULE 2: EXTRACTION LOGIC ---
 def extract_jobs_from_html(html_content, conn):
     soup = BeautifulSoup(html_content, 'html.parser')
     rows = soup.find_all('tr', id=re.compile(r'^tr\d+$'))
@@ -111,7 +78,3 @@ def run_scraper(target_url):
     
     conn.close()
     print("Scraping cycle complete.")
-
-if __name__ == "__main__":
-    TARGET_URL = "https://www.topjobs.lk/applicant/vacancybyfunctionalarea.jsp?FA=HNS" 
-    run_scraper(TARGET_URL)
