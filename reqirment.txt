@@ -1,0 +1,5 @@
+playwright
+pillow
+#sqlite3
+BeautifulSoup4
+#re
